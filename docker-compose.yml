@@ -1,0 +1,53 @@
+version: '3' 
+services:
+  apache:
+    #image: httpd #DEV
+    image: test-apache:latest
+    container_name: apache-reverse
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./reverse-proxy:/usr/local/apache2/conf/sites
+    #  - ./httpd.conf:/usr/local/apache2/conf/httpd.conf #DEV
+    links:
+      - wordpress
+    networks:
+      internal_network:
+        aliases:
+          - apache.docker.internal
+  db:
+    image: mysql:5.7
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: wordpress_rootpass
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress_user
+      MYSQL_PASSWORD: wordpress_pass
+    networks:
+      db:
+  wordpress:
+    depends_on:
+      - db
+    image: 'wordpress:latest'
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_USER: wordpress_user
+      WORDPRESS_DB_PASSWORD: wordpress_pass
+      WORDPRESS_DB_NAME: wordpress
+    networks:
+      internal_network:
+        aliases: 
+          - wordpress.docker.internal
+      db:
+ 
+networks:
+  internal_network:
+  db:
+volumes:
+  dbdata:
+    driver: local
+    labels:
+      com.project.description: "Database data"
